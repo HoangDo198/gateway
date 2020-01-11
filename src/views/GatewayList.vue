@@ -35,15 +35,15 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text >Cancel</v-btn>
-          <v-btn color="blue darken-1" text >Save</v-btn>
+          <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
+          <v-btn color="blue darken-1" text @click="save">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-list >
+    <v-list>
       <v-list-group
         v-for="item in items"
-        :key="`${item.app}`"
+        :key="`${item.app}-${Math.floor(Math.random() * 10)}`"
         :prepend-icon="item.action"
         no-action
         sub-group
@@ -56,7 +56,8 @@
           </v-list-item-content>
         </template>
 
-        <v-list-item id="warp-item" 
+        <v-list-item
+          id="warp-item"
           v-for="subItem in item.subitems"
           :key="subItem._id"
           :style="{backgroundColor: '#fae7e7', borderColor: '#ff0000'}"
@@ -72,12 +73,11 @@
             </v-btn>
           </v-list-item-action>
 
-          <v-list-item-action >
-            <v-btn icon @click="deleteItem()">
+          <v-list-item-action>
+            <v-btn icon @click="deleteItem(subItem)">
               <v-icon color="dark lighten-1">mdi-delete</v-icon>
             </v-btn>
           </v-list-item-action>
-
         </v-list-item>
       </v-list-group>
     </v-list>
@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import axios from '../axiosInstance';
+import axios from "../axiosInstance";
 export default {
   data: () => ({
     dialog: false,
@@ -94,32 +94,15 @@ export default {
       language: "",
       code: "",
       text: "",
-      Application: "",
+      Application: ""
     },
     defaultItem: {
       language: "",
       code: "",
       text: "",
-      Application: "",
+      Application: ""
     },
-    items: [
-      {
-        app: "vi",
-        subitems: [{
-          language: "vi",
-          _id: "5e1816ba7af7545a6cce1473",
-          code: "LANGUAGE_CODE_NOT_FOUND",
-          text: "Không tìm thấy mã lỗi này."
-        },
-        {
-          language: "vi",
-          _id: "5e1816ba7af7545a6cce1475",
-          code: "LANGUAGE_CODE_NOT_FOUND",
-          text: "Không tìm thấy mã lỗi này."
-        }
-        ]
-      },
-    ]
+    items: []
   }),
   computed: {
     formTitle() {
@@ -131,29 +114,43 @@ export default {
       val || this.close();
     }
   },
-  created(){
+  created() {
     this.initialize();
   },
   methods: {
-    initialize(){
-      axios.get('/languageByCode', {
+    initialize() {
+      axios.get("/languageByCode", {
         params: {
           code: "LANGUAGE_CODE_NOT_FOUND"
         }
-      }).then( data => {
-        console.log(data);
-      })
-    },
-    deleteItem () {
-      confirm('Are you sure you want to delete this item?')
+      }).then(data => {
+        let datas = [];
+        let Obj = {};
+        datas.push(data.data.data.vi);
+        Obj.app = data.data.data.vi.language;
+        Obj.subitems = datas;
+        this.items.push(Obj);
+      });
     },
 
-    editItem (item) {
-      this.editedIndex = this.items.indexOf(item);
-      console.log(this.editedIndex);
-      
-      this.editedItem = Object.assign({}, item);
-      this.dialog = true
+    deleteItem(subItem) {
+      let index;
+      for(let sub of this.items) {
+        index = sub.subitems.indexOf(subItem);
+      }
+      this.editedIndex = index;
+      confirm("Are you sure you want to delete this item?");
+      this.items.splice(index, 1);
+    },
+
+    editItem(subItem) {
+      let index;
+      for (let sub of this.items) {
+        index = sub.subitems.indexOf(subItem);
+      }
+      this.editedIndex = index;
+      this.editedItem = Object.assign({}, subItem);
+      this.dialog = true;
     },
 
     close() {
@@ -163,6 +160,36 @@ export default {
         this.editedIndex = -1;
       }, 300);
     },
+
+    save() {
+      let obj = {};
+      let subObj = [];
+      let datas = {};
+      if (this.editedIndex > -1) {
+        obj.app = this.editedItem.language;
+        subObj.push(this.editedItem);
+        obj.subitems = subObj;
+        let test = this.items[this.editedIndex];
+        Object.assign(test, obj);
+        datas._id = this.editedItem._id;
+        datas.text = this.editedItem.text;
+        datas.code = this.editedItem.code;
+        datas.Application = this.editedItem.Application;
+        console.log(datas);
+      } else {
+        obj.app = this.editedItem.language;
+        this.items.forEach(element => {
+          if (element.app === this.editedItem.language) {
+            element.subitems.push(this.editedItem);
+          } else {
+            subObj.push(this.editedItem);
+            obj.subitems = subObj;
+            this.items.push(obj);
+          }
+        });
+      }
+      this.close();
+    }
   }
 };
 </script>
