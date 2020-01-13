@@ -35,15 +35,15 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text >Cancel</v-btn>
-          <v-btn color="blue darken-1" text >Save</v-btn>
+          <v-btn color="blue darken-1" text>Cancel</v-btn>
+          <v-btn color="blue darken-1" text>Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-list >
+    <v-list>
       <v-list-group
         v-for="item in items"
-        :key="`${item.app}`"
+        :key="`${ item.app } - ${Math.floor(Math.random() * 10)}`"
         :prepend-icon="item.action"
         no-action
         sub-group
@@ -56,7 +56,8 @@
           </v-list-item-content>
         </template>
 
-        <v-list-item id="warp-item" 
+        <v-list-item
+          id="warp-item"
           v-for="subItem in item.subitems"
           :key="subItem._id"
           :style="{backgroundColor: '#fae7e7', borderColor: '#ff0000'}"
@@ -72,12 +73,11 @@
             </v-btn>
           </v-list-item-action>
 
-          <v-list-item-action >
-            <v-btn icon @click="deleteItem()">
+          <v-list-item-action>
+            <v-btn icon @click="deleteItem(subItem._id)">
               <v-icon color="dark lighten-1">mdi-delete</v-icon>
             </v-btn>
           </v-list-item-action>
-
         </v-list-item>
       </v-list-group>
     </v-list>
@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import axios from '../axiosInstance';
+import axios from "../axiosInstance";
 export default {
   data: () => ({
     dialog: false,
@@ -94,32 +94,15 @@ export default {
       language: "",
       code: "",
       text: "",
-      Application: "",
+      Application: ""
     },
     defaultItem: {
       language: "",
       code: "",
       text: "",
-      Application: "",
+      Application: ""
     },
-    items: [
-      {
-        app: "vi",
-        subitems: [{
-          language: "vi",
-          _id: "5e1816ba7af7545a6cce1473",
-          code: "LANGUAGE_CODE_NOT_FOUND",
-          text: "Không tìm thấy mã lỗi này."
-        },
-        {
-          language: "vi",
-          _id: "5e1816ba7af7545a6cce1475",
-          code: "LANGUAGE_CODE_NOT_FOUND",
-          text: "Không tìm thấy mã lỗi này."
-        }
-        ]
-      },
-    ]
+    items: []
   }),
   computed: {
     formTitle() {
@@ -131,29 +114,43 @@ export default {
       val || this.close();
     }
   },
-  created(){
+  created() {
     this.initialize();
   },
+  destroyed() {
+    this.deleteItem();
+  },
   methods: {
-    initialize(){
-      axios.get('/languageByCode', {
-        params: {
-          code: "LANGUAGE_CODE_NOT_FOUND"
-        }
-      }).then( data => {
-        console.log(data);
-      })
+    initialize() {
+      axios
+        .get("/getAll")
+        .then(data => {
+          var obj = {};
+          var subitems;
+          subitems = data.data.data;
+          obj.app = data.data.data[0].language;
+          obj.subitems = subitems;
+          this.items.push(obj);
+        })
+        .catch(err => {
+          console.log(err);
+        });
     },
-    deleteItem () {
-      confirm('Are you sure you want to delete this item?')
+    deleteItem(id) {
+      axios
+        .delete("/deleteById", { params: { id: id } })
+        .then(console.log("delete success!!"))
+        .catch(err => {
+          console.log(err);
+        });
     },
 
-    editItem (item) {
+    editItem(item) {
       this.editedIndex = this.items.indexOf(item);
       console.log(this.editedIndex);
-      
+
       this.editedItem = Object.assign({}, item);
-      this.dialog = true
+      this.dialog = true;
     },
 
     close() {
@@ -162,7 +159,7 @@ export default {
         this.editedItem = Object.assign({}, this.defaultItem);
         this.editedIndex = -1;
       }, 300);
-    },
+    }
   }
 };
 </script>
