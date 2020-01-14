@@ -50,7 +50,7 @@ export default {
     },
     returnHome() {
       this.$router.push({
-        name: "Dashboard"
+        name: "Form"
       });
     },
     ...mapActions([

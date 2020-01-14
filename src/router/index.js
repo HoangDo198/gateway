@@ -21,7 +21,12 @@ const routes = [
         path: '/GateWay',
         name: 'list languages',
         component: () => import('../views/GatewayList.vue')
-      }
+      },
+      {
+        path: "/Form",
+        name: "Form",
+        component: () => import('../views/fromAddnew.vue')
+      },
     ]
   },
 ]
