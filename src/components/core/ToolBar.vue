@@ -2,7 +2,7 @@
   <v-toolbar id="core-toolbar" flat prominent style="background: #eee; height:80px!important">
     <div class="v-toolbar-title">
       <v-toolbar-title
-        class="tertiary--text font-weight-regular display-2"
+        class="tertiary--text font-weight-regular display-1"
         style="line-height:80px!important;"
       >{{ getRouterName }}</v-toolbar-title>
     </div>
@@ -54,9 +54,7 @@ export default {
   },
   methods: {
     logout: function() {
-        this.$store.dispatch("logout").then(() => {
-        this.$router.push("/login");
-      });
+      localStorage.removeItem('Applang');
     }
   },
   watch: {

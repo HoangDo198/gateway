@@ -10,59 +10,53 @@
   >
     <v-list-item>
       <v-list-item-content>
-        <v-list-item-title class="title" @click="returnHome()">GateWay</v-list-item-title>
+        <v-list-item-title class="title" @click="returnHome()">Application Language</v-list-item-title>
         <v-list-item-subtitle>fast and furious</v-list-item-subtitle>
       </v-list-item-content>
     </v-list-item>
 
-    <v-divider></v-divider>
-
-    <v-list>
-      <v-list-group
-        v-for="item in items"
-        :key="item.title"
-        :prepend-icon="item.action"
-        no-action
+    <v-list dense nav>
+      <v-list-item 
+      v-for="item in items" 
+      :key="item.title"
+      :to="item.to" 
+      @click="getAppname(item.title)"
       >
-        <template v-slot:activator>
-          <v-list-item-content>
-            <v-list-item-title v-text="item.title"></v-list-item-title>
-          </v-list-item-content>
-        </template>
-
-        <v-list-item v-for="subItem in item.items" :key="subItem.title" :to="subItem.to">
-          <v-list-item-content>
-            <v-list-item-title v-text="subItem.title"></v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-
-      </v-list-group>
+        <v-list-item-content>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </v-navigation-drawer>
 </template>
 
 <script>
+import axios from "./../../axiosInstance";
+import {mapActions} from 'vuex'; 
 export default {
-  data() {
-    return {
-      items: [
-        {
-          action: "mdi-alert-outline",
-          title: "LIST LANGUAGES",
-          items: [
-            { title: "List Languages", to: "/GateWay" },
-          ]
-        }
-      ]
-    };
+  data: () => ({
+    items: []
+  }),
+  created() {
+    this.initialize();
   },
   methods: {
+    initialize() {
+      axios.get("/getAllApp").then(res => {
+        res.data.data.map(val => {
+          this.items.push({ title: val, to: '/GateWay' });
+        });
+      });
+    },
     returnHome() {
       this.$router.push({
         name: "Dashboard"
-      })
-    }
-  }
+      });
+    },
+    ...mapActions([
+      'getAppname'
+    ])
+  },
 };
 </script>
 

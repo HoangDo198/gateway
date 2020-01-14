@@ -40,52 +40,48 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-list>
-      <v-list-group
-        v-for="item in items"
-        :key="`${item.app}-${Math.floor(Math.random() * 10)}`"
-        :prepend-icon="item.action"
-        no-action
-        sub-group
-        value="true"
-      >
-        <template v-slot:activator>
-          <v-list-item-content>
-            <v-list-item-title class="title" v-text="item.app"></v-list-item-title>
-            <v-divider></v-divider>
-          </v-list-item-content>
-        </template>
 
-        <v-list-item
-          id="warp-item"
-          v-for="subItem in item.subitems"
-          :key="subItem._id"
-          :style="{backgroundColor: '#fae7e7', borderColor: '#ff0000'}"
-        >
+    <template>
+      <v-card>
+        <v-card-title>
+          <span class="headline">Languages</span>
+        </v-card-title>
+
+        <v-card-actions id="language" v-for="lang in checkState" :key="lang">
+          <v-btn color="blue darken-1" v-text="lang" @click="getByApp(lang)"></v-btn>
+        </v-card-actions>
+      </v-card>
+    </template>
+
+    <v-divider></v-divider>
+    <template>
+      <v-card v-for="item in items" :key="item._id" id="card-language">
+        <v-list-item two-line dense>
           <v-list-item-content>
-            <v-list-item-title>CODE: {{subItem.code}}</v-list-item-title>
-            <v-list-item-subtitle>Text: {{subItem.text}}</v-list-item-subtitle>
+            <v-list-item-title>{{item.code}}</v-list-item-title>
+            <v-list-item-subtitle>{{item.text}}</v-list-item-subtitle>
           </v-list-item-content>
 
           <v-list-item-action>
-            <v-btn icon @click="editItem(subItem)">
-              <v-icon color="dark lighten-1">mdi-border-color</v-icon>
+            <v-btn icon>
+              <v-icon color="dark lighten-1" @click="editItem(item)">mdi-border-color</v-icon>
             </v-btn>
           </v-list-item-action>
 
           <v-list-item-action>
-            <v-btn icon @click="deleteItem(subItem)">
-              <v-icon color="dark lighten-1">mdi-delete</v-icon>
+            <v-btn icon>
+              <v-icon color="dark lighten-1" @click="deleteItem(item)">mdi-delete</v-icon>
             </v-btn>
           </v-list-item-action>
         </v-list-item>
-      </v-list-group>
-    </v-list>
+      </v-card>
+    </template>
   </div>
 </template>
 
 <script>
-import axios from "../axiosInstance";
+import { mapGetters } from "vuex";
+import axios from "./../axiosInstance";
 export default {
   data: () => ({
     dialog: false,
@@ -102,12 +98,14 @@ export default {
       text: "",
       Application: ""
     },
-    items: []
+    items: [],
+    language: []
   }),
   computed: {
     formTitle() {
       return this.editedIndex === -1 ? "New Item" : "Edit Item";
-    }
+    },
+    ...mapGetters(["checkState"])
   },
   watch: {
     dialog(val) {
@@ -118,39 +116,42 @@ export default {
     this.initialize();
   },
   methods: {
-    initialize() {
-      axios.get("/languageByCode", {
-        params: {
-          code: "LANGUAGE_CODE_NOT_FOUND"
-        }
-      }).then(data => {
-        let datas = [];
-        let Obj = {};
-        datas.push(data.data.data.vi);
-        Obj.app = data.data.data.vi.language;
-        Obj.subitems = datas;
-        this.items.push(Obj);
-      });
+    initialize() {},
+    getByApp(lang) {
+      axios
+        .get("/languagetByApp", {
+          params: {
+            application: this.$store.state.appname,
+            lang: lang
+          }
+        })
+        .then(res => {
+          console.log(res);
+          let datas = Object.values(res.data.data);
+          this.items = datas;
+          console.log(this.items);
+        });
     },
 
-    deleteItem(subItem) {
-      let index;
-      for(let sub of this.items) {
-        index = sub.subitems.indexOf(subItem);
-      }
-      this.editedIndex = index;
+    deleteItem(item) {
+      this.editedIndex = this.items.indexOf(item);
       confirm("Are you sure you want to delete this item?");
-      this.items.splice(index, 1);
+      this.items.splice(this.editedIndex, 1);
+      axios.delete('/deleteById', {params:{
+        id: this.editedItem._id
+      }}).then(res => {
+        console.log(res);
+        alert('delete successed!!!');
+      }).catch(err => {
+        console.log(err);
+        alert('delete fail!!!');
+      })
     },
 
-    editItem(subItem) {
-      let index;
-      for (let sub of this.items) {
-        index = sub.subitems.indexOf(subItem);
-      }
-      this.editedIndex = index;
-      this.editedItem = Object.assign({}, subItem);
+    editItem(item) {
       this.dialog = true;
+      this.editedIndex = this.items.indexOf(item);
+      this.editedItem = Object.assign({}, item);
     },
 
     close() {
@@ -162,62 +163,34 @@ export default {
     },
 
     save() {
-      let obj = {};
-      let subObj = [];
-      let datas = {};
       if (this.editedIndex > -1) {
-        obj.app = this.editedItem.language;
-        subObj.push(this.editedItem);
-        obj.subitems = subObj;
-        let test = this.items[this.editedIndex];
-        Object.assign(test, obj);
-        datas._id = this.editedItem._id;
-        datas.text = this.editedItem.text;
-        datas.code = this.editedItem.code;
-        datas.Application = this.editedItem.Application;
-        console.log(datas);
+        Object.assign(this.items[this.editedIndex], this.editedItem);
+        console.log(this.editedItem._id);
+        console.log(this.editedItem.text);
+        axios.put('/updateById', {
+          id: this.editedItem._id,
+          text: this.editedItem.text
+        }).then(res => {
+          Object.assign(this.items[this.editedIndex], res.data.data);
+          alert('update successed!!!');
+        }).catch(err => {
+          console.log(err);
+          alert('update fail !!!');
+        })
       } else {
-        obj.app = this.editedItem.language;
-        this.items.forEach(element => {
-          if (element.app === this.editedItem.language) {
-            element.subitems.push(this.editedItem);
-          } else {
-            subObj.push(this.editedItem);
-            obj.subitems = subObj;
-            this.items.push(obj);
-          }
-        });
+        this.desserts.push(this.editedItem);
+        alert('add new success');
       }
-      this.close();
+      // this.close();
     }
   }
 };
 </script>
 <style scoped>
-button.v-btn.v-btn--depressed.theme--light.v-size--small {
-  min-width: 0 !important;
-  width: 80px !important;
-  color: floralwhite;
-  font-weight: bold;
-  font-size: 16px;
+#language {
+  display: inline-block !important;
 }
-.v-list-item.theme--light {
-  margin: 0 20px 20px;
-  border: 1px solid #000;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.v-application .font-weight-light {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 36px !important;
-}
-.v-application--is-ltr
-  .v-list-group--no-action
-  > .v-list-group__items
-  > div
-  > .v-list-item {
-  padding-left: 16px;
+#card-language {
+  margin: 10px;
 }
 </style>
