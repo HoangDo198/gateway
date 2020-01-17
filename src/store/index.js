@@ -8,6 +8,7 @@ export default new Vuex.Store({
   state: {
     Applang: localStorage.getItem('Applang') || null,
     appname: localStorage.getItem('Appname') || null,
+    dialog: false
   },
   mutations: {
     getApplang(state, langs) {
@@ -15,6 +16,9 @@ export default new Vuex.Store({
     },
     getAppname(state, name) {
       state.appname = name;
+    },
+    getdialog(state, sts) {
+      state.dialog = sts;
     }
   },
   getters: {
@@ -22,22 +26,27 @@ export default new Vuex.Store({
       if (Array.isArray(state.Applang)) {
         return state.Applang;
       } else {
-        return state.Applang.split(",");
+        return state.Applang.split(",") || null;
       }
-    }
+    },
+    getdialog: state => state.dialog,
+    getAppname(state) {
+      return state.appname;
+    } 
   },
   actions: {
     getAppname({
       commit
-    }, appname) {
+    }, payload) {
       return new Promise((resolve, reject) => {
-        axios.get('/getSupportedLanguageByApp', {
+        axios.get('/getCodeByApp', {
           params: {
-            application: appname
+            application: payload.application,
+            code: payload.code
           }
         }).then(res => {
           const languages = res.data.data;
-          const name = appname;
+          const name = payload.application;
           localStorage.setItem('Applang', languages);
           localStorage.setItem('Appname', name);
           resolve(res);
@@ -46,10 +55,11 @@ export default new Vuex.Store({
         }).catch(err => {
           console.log(err);
           reject(err);
-          localStorage.removeItem('Applang');
-          localStorage.removeItem('Appname');
         })
       })
+    },
+    getdialog({commit}, sts) {
+      commit('getdialog', sts);
     }
   },
   modules: {}

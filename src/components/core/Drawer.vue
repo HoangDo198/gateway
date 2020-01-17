@@ -15,48 +15,62 @@
       </v-list-item-content>
     </v-list-item>
 
+    <v-divider></v-divider>
+
     <v-list dense nav>
-      <v-list-item 
-      v-for="item in items" 
-      :key="item.title"
-      :to="item.to" 
-      @click="getAppname(item.title)"
-      >
-        <v-list-item-content>
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
+      <v-list-item-group>
+        <v-list-item v-for="(item, i) in items" :key="i" @click="getAppname(item.title)">
+          <v-list-item-content>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list-item-group>
     </v-list>
   </v-navigation-drawer>
 </template>
 
 <script>
 import axios from "./../../axiosInstance";
-import {mapActions} from 'vuex'; 
+import EventBus from "../../eventBus";
 export default {
   data: () => ({
     items: []
   }),
   created() {
+    EventBus.$on('addNewApp', this.handler);
     this.initialize();
   },
   methods: {
     initialize() {
       axios.get("/getAllApp").then(res => {
-        res.data.data.map(val => {
-          this.items.push({ title: val, to: '/GateWay' });
+        res.data.data.forEach(val => {
+          this.items.push({ title: val });
+          return this.items;
         });
       });
     },
     returnHome() {
-      this.$router.push({
-        name: "Form"
-      });
+      this.$router.push('/');
     },
-    ...mapActions([
-      'getAppname'
-    ])
-  },
+    getAppname(application) {
+      let code = "";
+      let payload = {application, code }
+      this.$store.dispatch('getAppname', payload).then( () => {
+        const path = '/code'
+        if (this.$route.path !== path) {
+          this.$router.push(path);
+        }
+      })
+    },
+    handler(e) {
+      let check = this.items.find(element => element.title === e.application);
+      if(typeof(check) !== "undefined") {
+        return this.items;
+      } else {
+        this.items.push({title: e});
+      }
+    }
+  }
 };
 </script>
 

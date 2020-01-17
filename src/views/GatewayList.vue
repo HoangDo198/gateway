@@ -3,7 +3,10 @@
     <v-dialog v-model="dialog" max-width="500px">
       <template v-slot:activator="{ on }">
         <v-row>
-          <v-col cols="12">
+          <v-col cols="6">
+            <v-text-field placeholder="Search" class="mx-2" outlined rounded dense></v-text-field>
+          </v-col>
+          <v-col cols="6">
             <v-btn color="primary" dark class="mx-2 float-right" v-on="on">New Item</v-btn>
           </v-col>
         </v-row>
@@ -56,8 +59,9 @@
     <v-divider></v-divider>
     <template>
       <v-card v-for="item in items" :key="item._id" id="card-language">
-        <v-list-item two-line dense>
+        <v-list-item three-line dense>
           <v-list-item-content>
+            <v-list-item-title>{{item.language}}</v-list-item-title>
             <v-list-item-title>{{item.code}}</v-list-item-title>
             <v-list-item-subtitle>{{item.text}}</v-list-item-subtitle>
           </v-list-item-content>
@@ -135,17 +139,21 @@ export default {
 
     deleteItem(item) {
       this.editedIndex = this.items.indexOf(item);
-      confirm("Are you sure you want to delete this item?");
-      this.items.splice(this.editedIndex, 1);
-      axios.delete('/deleteById', {params:{
-        id: this.editedItem._id
-      }}).then(res => {
-        console.log(res);
-        alert('delete successed!!!');
-      }).catch(err => {
-        console.log(err);
-        alert('delete fail!!!');
-      })
+      confirm("Are you sure you want to delete this item?") &&
+        this.items.splice(this.editedIndex, 1);
+      axios
+        .delete("/deleteById", {
+          params: {
+            id: this.items[this.editedIndex]._id
+          }
+        })
+        .then(res => {
+          console.log(res);
+          alert("delete successed!!!");
+        })
+        .catch(err => {
+          console.log(err);
+        });
     },
 
     editItem(item) {
@@ -167,19 +175,22 @@ export default {
         Object.assign(this.items[this.editedIndex], this.editedItem);
         console.log(this.editedItem._id);
         console.log(this.editedItem.text);
-        axios.put('/updateById', {
-          id: this.editedItem._id,
-          text: this.editedItem.text
-        }).then(res => {
-          Object.assign(this.items[this.editedIndex], res.data.data);
-          alert('update successed!!!');
-        }).catch(err => {
-          console.log(err);
-          alert('update fail !!!');
-        })
+        axios
+          .put("/updateById", {
+            id: this.editedItem._id,
+            text: this.editedItem.text
+          })
+          .then(res => {
+            Object.assign(this.items[this.editedIndex], res.data.data);
+            alert("update successed!!!");
+          })
+          .catch(err => {
+            console.log(err);
+            alert("update fail !!!");
+          });
       } else {
         this.desserts.push(this.editedItem);
-        alert('add new success');
+        alert("add new success");
       }
       // this.close();
     }

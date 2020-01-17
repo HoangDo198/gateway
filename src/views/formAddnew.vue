@@ -77,7 +77,9 @@ export default {
       console.log(data);
       axios
         .post("/language", { lang: language, data: data })
-        .then()
+        .then(
+          location.reload()
+        )
         .catch(err => console.log(err));
     },
     

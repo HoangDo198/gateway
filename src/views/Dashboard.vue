@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import Drawer from "../components/core/Drawer";
+import Drawer from "../components/core/Drawer.vue";
 import Views from "../components/core/View";
 import ToolBar from "../components/core/ToolBar";
 export default {
